@@ -21,26 +21,6 @@ This BPMN 2.0 process models an automated and manager-mediated **Employee Leave 
      - A rejection notification with optional comments is sent to the employee (`Task_SendRejectionNotif`).
      - The process terminates at `EndEvent_Rejected`.
 
----
-
-##  BPMN Elements Mapping
-
-| BPMN Element Type | Element ID | Label / Name | Type Details |
-| :--- | :--- | :--- | :--- |
-| **Start Event** | `StartEvent_LeaveRequested` | Employee Submits Leave Request | None (Start Event) |
-| **Service Task** | `Task_CheckBalance` | Check Leave Balance | Camunda External Service Task |
-| **Exclusive Gateway** | `Gateway_BalanceCheck` | Sufficient Leave Balance? | XOR Gateway |
-| **Send Task** | `Task_SendInsufficientNotif` | Send Insufficient-Balance Notification | Camunda External Send Task |
-| **End Event** | `EndEvent_InsufficientBalance` | Request Rejected (Insufficient Balance) | None End Event |
-| **User Task** | `Task_ManagerApproval` | Manager Review & Approval | User Task (Candidate Group: managers) |
-| **Exclusive Gateway** | `Gateway_ManagerDecision` | Manager Decision? | XOR Gateway |
-| **Service Task** | `Task_UpdateBalance` | Update Employee Leave Balance | Camunda External Service Task |
-| **Send Task** | `Task_SendApprovalNotif` | Send Approval Notification | Camunda External Send Task |
-| **End Event** | `EndEvent_Approved` | Leave Approved & Process Ended | None End Event |
-| **Send Task** | `Task_SendRejectionNotif` | Send Rejection Notification | Camunda External Send Task |
-| **End Event** | `EndEvent_Rejected` | Leave Rejected & Process Ended | None End Event |
-
----
 
 ## Visual Process Diagram Architecture
 
@@ -67,12 +47,5 @@ This BPMN 2.0 process models an automated and manager-mediated **Employee Leave 
                                                             │
                                                             ▼
                                                 (End: Leave Approved)
-```
 
----
 
-## How to Import & Run in Camunda Modeler
-1. Open **Camunda Modeler** (`Camunda Modeler.exe`).
-2. Navigate to `File -> Open File...` and select `scenario1_leave_approval.bpmn`.
-3. You can inspect the process attributes, task topics (`check-leave-balance`, `update-leave-balance`, etc.), and execution properties.
-4. Deploy directly to your Camunda Engine (Camunda 7 or Camunda 8) using the Modeler deployment toolbar.
