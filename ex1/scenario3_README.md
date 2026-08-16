@@ -23,31 +23,7 @@ This BPMN 2.0 process models an **Enterprise IT Support Request & Help Desk Mana
 8. **Employee Notification**: The employee receives a resolution notification with resolution details (`Task_SendResolutionNotif`).
 9. **Process Completion**: Process finishes cleanly at `EndEvent_ITRequestResolved`.
 
----
 
-##  BPMN Elements Mapping
-
-| BPMN Element Type | Element ID | Label / Name | Type Details |
-| :--- | :--- | :--- | :--- |
-| **Start Event** | `StartEvent_ITProblemReported` | Employee Reports IT Problem | None Start Event |
-| **User Task** | `Task_SubmitITRequest` | Submit IT Support Request | Employee Portal Task |
-| **Service Task** | `Task_RegisterRequest` | Register Support Request | Camunda External Service Task |
-| **Service Task** | `Task_CheckSeverity` | Check Severity of Problem | Camunda External Service Task |
-| **Exclusive Gateway** | `Gateway_SeverityCheck` | Problem Severity? | XOR Gateway (Low / High) |
-| **User Task** | `Task_AssignSupportTech` | Assign to Support Technician | Support Technician Task |
-| **User Task** | `Task_AssignSeniorTech` | Assign to Senior Technician | Senior Technician Task |
-| **User Task** | `Task_InvestigateLowTech` | Investigate Problem (Support Tech) | Technician Investigation |
-| **User Task** | `Task_InvestigateSeniorTech` | Investigate Problem (Senior Tech) | Senior Tech Investigation |
-| **Exclusive Gateway** | `Gateway_MergeInvestigation` | Merge Investigation | Merge Gateway |
-| **Exclusive Gateway** | `Gateway_ResolutionCheck` | Can Problem Be Resolved Internally? | XOR Gateway (Yes / No) |
-| **User Task** | `Task_FixInternally` | Fix Problem Internally | Internal Technician Task |
-| **Service Task** | `Task_EscalateExternal` | Escalate Problem to External Service Provider | External Escalation Service |
-| **Exclusive Gateway** | `Gateway_MergeResolution` | Merge Resolution | Merge Gateway |
-| **Service Task** | `Task_UpdateStatus` | Update Request Status | Service Task |
-| **Send Task** | `Task_SendResolutionNotif` | Send Resolution Notification to Employee | Send Task |
-| **End Event** | `EndEvent_ITRequestResolved` | IT Request Resolved & Closed | None End Event |
-
----
 
 ## Visual Process Diagram Architecture
 
@@ -96,11 +72,6 @@ This BPMN 2.0 process models an **Enterprise IT Support Request & Help Desk Mana
              │
              ▼
  (End: IT Request Resolved)
-```
 
----
 
-## 🚀 How to Import & Run in Camunda Modeler
-1. Launch **Camunda Modeler**.
-2. Open `scenario3_it_service_request.bpmn`.
-3. View and deploy process definition to Camunda Engine.
+
