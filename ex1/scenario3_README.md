@@ -1,11 +1,11 @@
 # Scenario 3: IT Service Request Management
 
-## 📋 Overview
+##  Overview
 This BPMN 2.0 process models an **Enterprise IT Support Request & Help Desk Management System**. The workflow captures IT ticket logging, dynamic technician assignment based on problem severity, internal vs. vendor escalation paths, status tracking, and resolution notification.
 
 ---
 
-## ⚙️ Process Flow & Step-by-Step Requirements
+## Process Flow & Step-by-Step Requirements
 
 1. **Start Event**: An employee encounters an IT issue (`StartEvent_ITProblemReported`).
 2. **Submit IT Support Request**: The employee submits details via the self-service IT portal (`Task_SubmitITRequest`).
@@ -25,7 +25,7 @@ This BPMN 2.0 process models an **Enterprise IT Support Request & Help Desk Mana
 
 ---
 
-## 🛠️ BPMN Elements Mapping
+##  BPMN Elements Mapping
 
 | BPMN Element Type | Element ID | Label / Name | Type Details |
 | :--- | :--- | :--- | :--- |
@@ -49,7 +49,7 @@ This BPMN 2.0 process models an **Enterprise IT Support Request & Help Desk Mana
 
 ---
 
-## 📐 Visual Process Diagram Architecture
+## Visual Process Diagram Architecture
 
 ```
 [Start: IT Problem Reported]
