@@ -1,11 +1,11 @@
 # Scenario 2: Online Purchase Order Processing
 
-## 📋 Overview
+## Overview
 This BPMN 2.0 process models an **E-Commerce Online Purchase Order Workflow**. The system validates item inventory, processes customer payment securely, handles failure branches (out of stock, payment declined), prepares order fulfillment, ships items, and notifies the buyer.
 
 ---
 
-## ⚙️ Process Flow & Step-by-Step Requirements
+## Process Flow & Step-by-Step Requirements
 
 1. **Start Event**: A customer places an order via the online storefront (`StartEvent_OrderPlaced`).
 2. **Product Availability Check**: The order service checks stock availability in warehouse inventory (`Task_CheckAvailability`).
@@ -22,7 +22,7 @@ This BPMN 2.0 process models an **E-Commerce Online Purchase Order Workflow**. T
 
 ---
 
-## 🛠️ BPMN Elements Mapping
+##  BPMN Elements Mapping
 
 | BPMN Element Type | Element ID | Label / Name | Type Details |
 | :--- | :--- | :--- | :--- |
@@ -42,7 +42,7 @@ This BPMN 2.0 process models an **E-Commerce Online Purchase Order Workflow**. T
 
 ---
 
-## 📐 Visual Process Diagram Architecture
+##  Visual Process Diagram Architecture
 
 ```
 [Start: Order Placed] ──> [Check Product Availability] ──> <Is Product Available?>
