@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  id="Definitions_ITServiceRequest"
+                  targetNamespace="http://bpmn.io/schema/bpmn"
+                  exporter="Camunda Modeler"
+                  exporterVersion="5.20.0">
+  <bpmn:process id="Process_ITServiceRequest" name="IT Service Request Management" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_ITProblemReported" name="Employee Reports IT Problem">
+      <bpmn:outgoing>Flow_Start_ToSubmit</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:userTask id="Task_SubmitITRequest" name="Submit IT Support Request" camunda:candidateGroups="employees">
+      <bpmn:incoming>Flow_Start_ToSubmit</bpmn:incoming>
+      <bpmn:outgoing>Flow_SubmitToRegister</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:serviceTask id="Task_RegisterRequest" name="Register Support Request" camunda:type="external" camunda:topic="register-it-request">
+      <bpmn:incoming>Flow_SubmitToRegister</bpmn:incoming>
+      <bpmn:outgoing>Flow_RegisterToCheckSeverity</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:serviceTask id="Task_CheckSeverity" name="Check Severity of Problem" camunda:type="external" camunda:topic="check-severity">
+      <bpmn:incoming>Flow_RegisterToCheckSeverity</bpmn:incoming>
+      <bpmn:outgoing>Flow_SeverityToGateway</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:exclusiveGateway id="Gateway_SeverityCheck" name="Problem Severity?">
+      <bpmn:incoming>Flow_SeverityToGateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_LowSeverity</bpmn:outgoing>
+      <bpmn:outgoing>Flow_HighSeverity</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:userTask id="Task_AssignSupportTech" name="Assign to Support Technician" camunda:candidateGroups="support-technicians">
+      <bpmn:incoming>Flow_LowSeverity</bpmn:incoming>
+      <bpmn:outgoing>Flow_SupportTechInvestigate</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:userTask id="Task_AssignSeniorTech" name="Assign to Senior Technician" camunda:candidateGroups="senior-technicians">
+      <bpmn:incoming>Flow_HighSeverity</bpmn:incoming>
+      <bpmn:outgoing>Flow_SeniorTechInvestigate</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:userTask id="Task_InvestigateLowTech" name="Investigate Problem (Support Tech)" camunda:candidateGroups="support-technicians">
+      <bpmn:incoming>Flow_SupportTechInvestigate</bpmn:incoming>
+      <bpmn:outgoing>Flow_LowTechToMerge</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:userTask id="Task_InvestigateSeniorTech" name="Investigate Problem (Senior Tech)" camunda:candidateGroups="senior-technicians">
+      <bpmn:incoming>Flow_SeniorTechInvestigate</bpmn:incoming>
+      <bpmn:outgoing>Flow_SeniorTechToMerge</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:exclusiveGateway id="Gateway_MergeInvestigation" name="Merge Investigation">
+      <bpmn:incoming>Flow_LowTechToMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_SeniorTechToMerge</bpmn:incoming>
+      <bpmn:outgoing>Flow_InvestigatedToResolutionCheck</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:exclusiveGateway id="Gateway_ResolutionCheck" name="Can Problem Be Resolved Internally?">
+      <bpmn:incoming>Flow_InvestigatedToResolutionCheck</bpmn:incoming>
+      <bpmn:outgoing>Flow_InternalResolution</bpmn:outgoing>
+      <bpmn:outgoing>Flow_ExternalEscalation</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:userTask id="Task_FixInternally" name="Fix Problem Internally" camunda:candidateGroups="technicians">
+      <bpmn:incoming>Flow_InternalResolution</bpmn:incoming>
+      <bpmn:outgoing>Flow_InternalFixToMerge</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:serviceTask id="Task_EscalateExternal" name="Escalate Problem to External Service Provider" camunda:type="external" camunda:topic="escalate-external-provider">
+      <bpmn:incoming>Flow_ExternalEscalation</bpmn:incoming>
+      <bpmn:outgoing>Flow_ExternalFixToMerge</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:exclusiveGateway id="Gateway_MergeResolution" name="Merge Resolution">
+      <bpmn:incoming>Flow_InternalFixToMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_ExternalFixToMerge</bpmn:incoming>
+      <bpmn:outgoing>Flow_ResolvedToUpdateStatus</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:serviceTask id="Task_UpdateStatus" name="Update Request Status" camunda:type="external" camunda:topic="update-request-status">
+      <bpmn:incoming>Flow_ResolvedToUpdateStatus</bpmn:incoming>
+      <bpmn:outgoing>Flow_UpdateToSendNotif</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:sendTask id="Task_SendResolutionNotif" name="Send Resolution Notification to Employee" camunda:type="external" camunda:topic="send-resolution-notification">
+      <bpmn:incoming>Flow_UpdateToSendNotif</bpmn:incoming>
+      <bpmn:outgoing>Flow_EndResolved</bpmn:outgoing>
+    </bpmn:sendTask>
+
+    <bpmn:endEvent id="EndEvent_ITRequestResolved" name="IT Request Resolved &#38; Closed">
+      <bpmn:incoming>Flow_EndResolved</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- Sequence Flows -->
+    <bpmn:sequenceFlow id="Flow_Start_ToSubmit" sourceRef="StartEvent_ITProblemReported" targetRef="Task_SubmitITRequest" />
+    <bpmn:sequenceFlow id="Flow_SubmitToRegister" sourceRef="Task_SubmitITRequest" targetRef="Task_RegisterRequest" />
+    <bpmn:sequenceFlow id="Flow_RegisterToCheckSeverity" sourceRef="Task_RegisterRequest" targetRef="Task_CheckSeverity" />
+    <bpmn:sequenceFlow id="Flow_SeverityToGateway" sourceRef="Task_CheckSeverity" targetRef="Gateway_SeverityCheck" />
+    <bpmn:sequenceFlow id="Flow_LowSeverity" name="Low Severity" sourceRef="Gateway_SeverityCheck" targetRef="Task_AssignSupportTech" />
+    <bpmn:sequenceFlow id="Flow_HighSeverity" name="High Severity" sourceRef="Gateway_SeverityCheck" targetRef="Task_AssignSeniorTech" />
+    <bpmn:sequenceFlow id="Flow_SupportTechInvestigate" sourceRef="Task_AssignSupportTech" targetRef="Task_InvestigateLowTech" />
+    <bpmn:sequenceFlow id="Flow_SeniorTechInvestigate" sourceRef="Task_AssignSeniorTech" targetRef="Task_InvestigateSeniorTech" />
+    <bpmn:sequenceFlow id="Flow_LowTechToMerge" sourceRef="Task_InvestigateLowTech" targetRef="Gateway_MergeInvestigation" />
+    <bpmn:sequenceFlow id="Flow_SeniorTechToMerge" sourceRef="Task_InvestigateSeniorTech" targetRef="Gateway_MergeInvestigation" />
+    <bpmn:sequenceFlow id="Flow_InvestigatedToResolutionCheck" sourceRef="Gateway_MergeInvestigation" targetRef="Gateway_ResolutionCheck" />
+    <bpmn:sequenceFlow id="Flow_InternalResolution" name="Yes (Resolved Internally)" sourceRef="Gateway_ResolutionCheck" targetRef="Task_FixInternally" />
+    <bpmn:sequenceFlow id="Flow_ExternalEscalation" name="No (Escalate External)" sourceRef="Gateway_ResolutionCheck" targetRef="Task_EscalateExternal" />
+    <bpmn:sequenceFlow id="Flow_InternalFixToMerge" sourceRef="Task_FixInternally" targetRef="Gateway_MergeResolution" />
+    <bpmn:sequenceFlow id="Flow_ExternalFixToMerge" sourceRef="Task_EscalateExternal" targetRef="Gateway_MergeResolution" />
+    <bpmn:sequenceFlow id="Flow_ResolvedToUpdateStatus" sourceRef="Gateway_MergeResolution" targetRef="Task_UpdateStatus" />
+    <bpmn:sequenceFlow id="Flow_UpdateToSendNotif" sourceRef="Task_UpdateStatus" targetRef="Task_SendResolutionNotif" />
+    <bpmn:sequenceFlow id="Flow_EndResolved" sourceRef="Task_SendResolutionNotif" targetRef="EndEvent_ITRequestResolved" />
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_ITServiceRequest">
+    <bpmndi:BPMNPlane id="BPMNPlane_ITServiceRequest" bpmnElement="Process_ITServiceRequest">
+      <!-- Start Event Shape -->
+      <bpmndi:BPMNShape id="StartEvent_ITProblemReported_di" bpmnElement="StartEvent_ITProblemReported">
+        <dc:Bounds x="150" y="210" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="124" y="253" width="88" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- Task: Submit IT Request Shape -->
+      <bpmndi:BPMNShape id="Task_SubmitITRequest_di" bpmnElement="Task_SubmitITRequest">
+        <dc:Bounds x="220" y="188" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <!-- Task: Register Request Shape -->
+      <bpmndi:BPMNShape id="Task_RegisterRequest_di" bpmnElement="Task_RegisterRequest">
+        <dc:Bounds x="350" y="188" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <!-- Task: Check Severity Shape -->
+      <bpmndi:BPMNShape id="Task_CheckSeverity_di" bpmnElement="Task_CheckSeverity">
+        <dc:Bounds x="480" y="188" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <!-- Gateway: Severity Check Shape -->
+      <bpmndi:BPMNShape id="Gateway_SeverityCheck_di" bpmnElement="Gateway_SeverityCheck" isMarkerVisible="true">
+        <dc:Bounds x="615" y="203" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="617" y="173" width="46" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- Task: Assign Support Tech Shape -->
+      <bpmndi:BPMNShape id="Task_AssignSupportTech_di" bpmnElement="Task_AssignSupportTech">
+        <dc:Bounds x="710" y="110" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <!-- Task: Investigate Low Tech Shape -->
+      <bpmndi:BPMNShape id="Task_InvestigateLowTech_di" bpmnElement="Task_InvestigateLowTech">
+        <dc:Bounds x="840" y="110" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <!-- Task: Assign Senior Tech Shape -->
+      <bpmndi:BPMNShape id="Task_AssignSeniorTech_di" bpmnElement="Task_AssignSeniorTech">
+        <dc:Bounds x="710" y="270" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <!-- Task: Investigate Senior Tech Shape -->
+      <bpmndi:BPMNShape id="Task_InvestigateSeniorTech_di" bpmnElement="Task_InvestigateSeniorTech">
+        <dc:Bounds x="840" y="270" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <!-- Gateway: Merge Investigation Shape -->
+      <bpmndi:BPMNShape id="Gateway_MergeInvestigation_di" bpmnElement="Gateway_MergeInvestigation" isMarkerVisible="true">
+        <dc:Bounds x="975" y="203" width="50" height="50" />
+      </bpmndi:BPMNShape>
+
+      <!-- Gateway: Resolution Check Shape -->
+      <bpmndi:BPMNShape id="Gateway_ResolutionCheck_di" bpmnElement="Gateway_ResolutionCheck" isMarkerVisible="true">
+        <dc:Bounds x="1065" y="203" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1051" y="260" width="78" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- Task: Fix Internally Shape -->
+      <bpmndi:BPMNShape id="Task_FixInternally_di" bpmnElement="Task_FixInternally">
+        <dc:Bounds x="1160" y="110" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <!-- Task: Escalate External Shape -->
+      <bpmndi:BPMNShape id="Task_EscalateExternal_di" bpmnElement="Task_EscalateExternal">
+        <dc:Bounds x="1160" y="270" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <!-- Gateway: Merge Resolution Shape -->
+      <bpmndi:BPMNShape id="Gateway_MergeResolution_di" bpmnElement="Gateway_MergeResolution" isMarkerVisible="true">
+        <dc:Bounds x="1295" y="203" width="50" height="50" />
+      </bpmndi:BPMNShape>
+
+      <!-- Task: Update Status Shape -->
+      <bpmndi:BPMNShape id="Task_UpdateStatus_di" bpmnElement="Task_UpdateStatus">
+        <dc:Bounds x="1380" y="188" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <!-- Task: Send Resolution Notif Shape -->
+      <bpmndi:BPMNShape id="Task_SendResolutionNotif_di" bpmnElement="Task_SendResolutionNotif">
+        <dc:Bounds x="1510" y="188" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <!-- End Event Shape -->
+      <bpmndi:BPMNShape id="EndEvent_ITRequestResolved_di" bpmnElement="EndEvent_ITRequestResolved">
+        <dc:Bounds x="1650" y="210" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1629" y="253" width="79" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- Edges -->
+      <bpmndi:BPMNEdge id="Flow_Start_ToSubmit_di" bpmnElement="Flow_Start_ToSubmit">
+        <di:waypoint x="186" y="228" />
+        <di:waypoint x="220" y="228" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_SubmitToRegister_di" bpmnElement="Flow_SubmitToRegister">
+        <di:waypoint x="320" y="228" />
+        <di:waypoint x="350" y="228" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_RegisterToCheckSeverity_di" bpmnElement="Flow_RegisterToCheckSeverity">
+        <di:waypoint x="450" y="228" />
+        <di:waypoint x="480" y="228" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_SeverityToGateway_di" bpmnElement="Flow_SeverityToGateway">
+        <di:waypoint x="580" y="228" />
+        <di:waypoint x="615" y="228" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_LowSeverity_di" bpmnElement="Flow_LowSeverity">
+        <di:waypoint x="640" y="203" />
+        <di:waypoint x="640" y="150" />
+        <di:waypoint x="710" y="150" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="640" y="133" width="63" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_HighSeverity_di" bpmnElement="Flow_HighSeverity">
+        <di:waypoint x="640" y="253" />
+        <di:waypoint x="640" y="310" />
+        <di:waypoint x="710" y="310" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="640" y="313" width="66" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_SupportTechInvestigate_di" bpmnElement="Flow_SupportTechInvestigate">
+        <di:waypoint x="810" y="150" />
+        <di:waypoint x="840" y="150" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_SeniorTechInvestigate_di" bpmnElement="Flow_SeniorTechInvestigate">
+        <di:waypoint x="810" y="310" />
+        <di:waypoint x="840" y="310" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_LowTechToMerge_di" bpmnElement="Flow_LowTechToMerge">
+        <di:waypoint x="940" y="150" />
+        <di:waypoint x="1000" y="150" />
+        <di:waypoint x="1000" y="203" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_SeniorTechToMerge_di" bpmnElement="Flow_SeniorTechToMerge">
+        <di:waypoint x="940" y="310" />
+        <di:waypoint x="1000" y="310" />
+        <di:waypoint x="1000" y="253" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_InvestigatedToResolutionCheck_di" bpmnElement="Flow_InvestigatedToResolutionCheck">
+        <di:waypoint x="1025" y="228" />
+        <di:waypoint x="1065" y="228" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_InternalResolution_di" bpmnElement="Flow_InternalResolution">
+        <di:waypoint x="1090" y="203" />
+        <di:waypoint x="1090" y="150" />
+        <di:waypoint x="1160" y="150" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1076" y="130" width="70" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ExternalEscalation_di" bpmnElement="Flow_ExternalEscalation">
+        <di:waypoint x="1090" y="253" />
+        <di:waypoint x="1090" y="310" />
+        <di:waypoint x="1160" y="310" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1076" y="316" width="67" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_InternalFixToMerge_di" bpmnElement="Flow_InternalFixToMerge">
+        <di:waypoint x="1260" y="150" />
+        <di:waypoint x="1320" y="150" />
+        <di:waypoint x="1320" y="203" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ExternalFixToMerge_di" bpmnElement="Flow_ExternalFixToMerge">
+        <di:waypoint x="1260" y="310" />
+        <di:waypoint x="1320" y="310" />
+        <di:waypoint x="1320" y="253" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ResolvedToUpdateStatus_di" bpmnElement="Flow_ResolvedToUpdateStatus">
+        <di:waypoint x="1345" y="228" />
+        <di:waypoint x="1380" y="228" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_UpdateToSendNotif_di" bpmnElement="Flow_UpdateToSendNotif">
+        <di:waypoint x="1480" y="228" />
+        <di:waypoint x="1510" y="228" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_EndResolved_di" bpmnElement="Flow_EndResolved">
+        <di:waypoint x="1610" y="228" />
+        <di:waypoint x="1650" y="228" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

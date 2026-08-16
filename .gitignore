@@ -1,0 +1,20 @@
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.swp
+*.tmp
+
+# Executables & Large Binaries
+*.exe
+*.dll
+*.pak
+*.bin
+*.dat
+
+# Camunda Modeler workspace temp files
+.camunda/
