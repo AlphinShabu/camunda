@@ -20,27 +20,6 @@ This BPMN 2.0 process models an **E-Commerce Online Purchase Order Workflow**. T
      - A shipping tracking confirmation email is sent (`Task_SendShippingConf`).
      - The process completes successfully at `EndEvent_OrderCompleted`.
 
----
-
-##  BPMN Elements Mapping
-
-| BPMN Element Type | Element ID | Label / Name | Type Details |
-| :--- | :--- | :--- | :--- |
-| **Start Event** | `StartEvent_OrderPlaced` | Customer Places Order | None (Start Event) |
-| **Service Task** | `Task_CheckAvailability` | Check Product Availability | Camunda External Service Task |
-| **Exclusive Gateway** | `Gateway_AvailabilityCheck` | Is Product Available? | XOR Gateway |
-| **Send Task** | `Task_SendOutOfStockNotif` | Notify Customer (Out of Stock) | Camunda External Send Task |
-| **End Event** | `EndEvent_OutOfStock` | Order Cancelled (Out of Stock) | None End Event |
-| **Service Task** | `Task_ProcessPayment` | Process Payment | Camunda External Service Task |
-| **Exclusive Gateway** | `Gateway_PaymentCheck` | Is Payment Successful? | XOR Gateway |
-| **Send Task** | `Task_SendPaymentFailedNotif` | Notify Customer (Payment Failure) | Camunda External Send Task |
-| **End Event** | `EndEvent_PaymentFailed` | Order Cancelled (Payment Failed) | None End Event |
-| **Service Task** | `Task_PrepareShipment` | Confirm Order & Prepare Product for Shipment | Camunda External Service Task |
-| **Service Task** | `Task_ShipOrder` | Ship Order | Camunda External Service Task |
-| **Send Task** | `Task_SendShippingConf` | Send Shipping Confirmation | Camunda External Send Task |
-| **End Event** | `EndEvent_OrderCompleted` | Order Completed & Shipped | None End Event |
-
----
 
 ##  Visual Process Diagram Architecture
 
@@ -74,7 +53,4 @@ This BPMN 2.0 process models an **E-Commerce Online Purchase Order Workflow**. T
 
 ---
 
-## 🚀 How to Import & Run in Camunda Modeler
-1. Launch **Camunda Modeler**.
-2. Open `scenario2_purchase_order.bpmn`.
-3. Test execution paths in Camunda Engine or Camunda Desktop Application.
+
