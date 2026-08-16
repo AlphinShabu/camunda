@@ -1,11 +1,11 @@
 # Scenario 1: Employee Leave Approval
 
-## 📋 Overview
+##  Overview
 This BPMN 2.0 process models an automated and manager-mediated **Employee Leave Approval System**. The process ensures that an employee's leave balance is verified prior to requesting managerial review and handles all subsequent balance updates and employee notifications.
 
 ---
 
-## ⚙️ Process Flow & Step-by-Step Requirements
+##  Process Flow & Step-by-Step Requirements
 
 1. **Start Event**: The process begins when an employee submits a leave request through the company's HR system (`StartEvent_LeaveRequested`).
 2. **Leave Balance Verification**: The HR system executes a service task (`Task_CheckBalance`) to evaluate the employee's remaining leave entitlement against the requested days.
@@ -23,7 +23,7 @@ This BPMN 2.0 process models an automated and manager-mediated **Employee Leave 
 
 ---
 
-## 🛠️ BPMN Elements Mapping
+##  BPMN Elements Mapping
 
 | BPMN Element Type | Element ID | Label / Name | Type Details |
 | :--- | :--- | :--- | :--- |
@@ -42,7 +42,7 @@ This BPMN 2.0 process models an automated and manager-mediated **Employee Leave 
 
 ---
 
-## 📐 Visual Process Diagram Architecture
+## Visual Process Diagram Architecture
 
 ```
 [Start: Leave Requested] ──> [Check Leave Balance] ──> <Sufficient Balance?>
@@ -71,7 +71,7 @@ This BPMN 2.0 process models an automated and manager-mediated **Employee Leave 
 
 ---
 
-## 🚀 How to Import & Run in Camunda Modeler
+## How to Import & Run in Camunda Modeler
 1. Open **Camunda Modeler** (`Camunda Modeler.exe`).
 2. Navigate to `File -> Open File...` and select `scenario1_leave_approval.bpmn`.
 3. You can inspect the process attributes, task topics (`check-leave-balance`, `update-leave-balance`, etc.), and execution properties.
