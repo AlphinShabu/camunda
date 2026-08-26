@@ -1,27 +1,7 @@
 # Exercise 2: DMN Integration, Hit Policies & Dynamic Workflow Routing
 
-Welcome to **Exercise 2 (ex2)** of the **Camunda Repository**. This directory contains standard BPMN 2.0 XML process diagrams, DMN 1.3 decision tables, test cases, and technical documentation for Question 1 and Question 2.
 
----
-
-## 📂 Exercise 2 Directory Structure
-
-```
-ex2/
-├── README.md                                   # Master Exercise 2 Overview (This document)
-├── q1_loan_risk_routing/
-│   ├── evaluate_loan_risk.dmn                  # Q1 DMN Decision Table (Hit Policy: Unique)
-│   ├── q1_loan_risk_routing.bpmn               # Q1 BPMN 2.0 Process Diagram
-│   └── q1_README.md                            # Q1 Detailed Specifications & FEEL Documentation
-└── q2_order_discount_fulfillment/
-    ├── calculate_discounts.dmn                 # Q2 DMN Decision Table (Hit Policy: Collect Sum C+)
-    ├── q2_order_discount_fulfillment.bpmn      # Q2 BPMN 2.0 Process Diagram
-    └── q2_README.md                            # Q2 Detailed Specifications & Test Verification
-```
-
----
-
-## 📑 Summary of Questions
+##  Summary of Questions
 
 ### 1. Question 1: Loan Application Risk Routing
 - **Directory**: [`q1_loan_risk_routing/`](q1_loan_risk_routing/)
@@ -34,7 +14,7 @@ ex2/
   - Multi-branch Exclusive Gateway (XOR) using FEEL condition expressions on decision output fields (`riskTier`, `requiresManualReview`).
   - Automated approval/disbursement vs. underwriter review vs. auto-rejection notification.
 
----
+
 
 ### 2. Question 2: Multi-Item Order Discount & Fulfillment Orchestration
 - **Directory**: [`q2_order_discount_fulfillment/`](q2_order_discount_fulfillment/)
@@ -48,11 +28,6 @@ ex2/
   - Dynamic routing via XOR gateway (`finalAmount >= 1000` requires Manager Sign-off; `< 1000` proceeds directly to Warehouse).
   - Verified sample payload (`PREMIUM`, `600`, `FESTIVE10`) resulting in a `25%` total discount.
 
----
 
-## 🛠️ How to Open & Test Files in Camunda Modeler
 
-1. Launch **Camunda Modeler** (or execute `Camunda Modeler.exe`).
-2. Click **File -> Open File...**.
-3. Select any `.bpmn` or `.dmn` file inside `ex2/q1_loan_risk_routing/` or `ex2/q2_order_discount_fulfillment/`.
-4. All diagram files contain clean visual layout coordinates (BPMNDI / DMNDI) ready for editing, deployment, or execution.
+
