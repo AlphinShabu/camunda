@@ -4,7 +4,6 @@
 [![Camunda Modeler](https://img.shields.io/badge/Camunda%20Modeler-5.20+-orange.svg)](https://camunda.com/download/modeler/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Repository created for **AlphinShabu** ([github.com/AlphinShabu](https://github.com/AlphinShabu)) containing enterprise process workflows, BPMN 2.0 XML diagrams, and architectural documentation created for Camunda Modeler and Camunda Platform.
 
 ---
 
