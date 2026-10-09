@@ -1,6 +1,6 @@
 
 
-### 1. Assignment 1: Student Project Approval & Allocation System (`assignment1_student_project_approval.bpmn`)
+### 1. Assignment 1: Student Project Approval & Allocation System
 - **Business Purpose**: Automated verification of student project proposals, screening by project coordinator, committee evaluation, faculty guide workload matching, and allocation dispatch.
 - **Participant Pools & Lanes**:
   - **Student / Team**: Submits proposals, resubmissions, and revised topics.
@@ -38,7 +38,7 @@
 
 ---
 
-### 2. Assignment 3: Loan Origination & Approval System (`assignment3_loan_origination_approval.bpmn`)
+### 2. Assignment 3: Loan Origination & Approval System
 - **Business Purpose**: Comprehensive processing of personal and secured loan applications through identity verification, credit bureau scoring, risk underwriting, offer generation, e-signature, and funds disbursement.
 - **Participant Pools & Lanes**:
   - **Applicant**: Submits applications, accepts offers, and e-signs agreements.
