@@ -1,0 +1,434 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  id="Definitions_StudentProjectApproval"
+                  targetNamespace="http://bpmn.io/schema/bpmn"
+                  exporter="Camunda Modeler"
+                  exporterVersion="5.20.0">
+  <bpmn:collaboration id="Collaboration_StudentProject">
+    <bpmn:participant id="Participant_Department" name="Student Project Approval &#38; Allocation System" processRef="Process_StudentProjectApproval" />
+  </bpmn:collaboration>
+
+  <bpmn:process id="Process_StudentProjectApproval" name="Student Project Approval &#38; Allocation System" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_1">
+      <bpmn:lane id="Lane_Student" name="Student / Team">
+        <bpmn:flowNodeRef>StartEvent_SubmitProposal</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_SubmitProposal</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ResubmitProposal</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_InvalidTeam</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ReviseProposal</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_ProposalRejected</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Coordinator" name="Project Coordinator">
+        <bpmn:flowNodeRef>Task_CoordinatorScreening</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ManualAllocation</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Committee" name="Review Committee (incl. HoD)">
+        <bpmn:flowNodeRef>Task_CommitteeEvaluation</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_CommitteeDecision</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Guide" name="Faculty Guide">
+        <bpmn:flowNodeRef>Task_GuideAcceptance</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_System" name="Project Management System">
+        <bpmn:flowNodeRef>Task_ValidateForm</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_ValidationCheck</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_SimilarityCheck</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>BusinessRule_GuideMatch</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_GuideAvailable</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_AllocateGuideSystem</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_SendAllocationRequest</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_NotifyStudent</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_Success</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+
+    <!-- Flow Elements -->
+    <bpmn:startEvent id="StartEvent_SubmitProposal" name="Student Team Submits Proposal">
+      <bpmn:outgoing>Flow_StartToSubmit</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:userTask id="Task_SubmitProposal" name="Submit Project Proposal" camunda:candidateGroups="students">
+      <bpmn:incoming>Flow_StartToSubmit</bpmn:incoming>
+      <bpmn:outgoing>Flow_SubmitToValidate</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:serviceTask id="Task_ValidateForm" name="Validate Form Completeness &#38; Team Rules" camunda:type="external" camunda:topic="validate-proposal-form">
+      <bpmn:incoming>Flow_SubmitToValidate</bpmn:incoming>
+      <bpmn:incoming>Flow_ResubmitToValidate</bpmn:incoming>
+      <bpmn:outgoing>Flow_ValidateToGateway</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:exclusiveGateway id="Gateway_ValidationCheck" name="Form &#38; Team Rules Valid?">
+      <bpmn:incoming>Flow_ValidateToGateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_ValidationPassed</bpmn:outgoing>
+      <bpmn:outgoing>Flow_FormInvalid</bpmn:outgoing>
+      <bpmn:outgoing>Flow_TeamInvalid</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:userTask id="Task_ResubmitProposal" name="Correct &#38; Resubmit Proposal" camunda:candidateGroups="students">
+      <bpmn:incoming>Flow_FormInvalid</bpmn:incoming>
+      <bpmn:outgoing>Flow_ResubmitToValidate</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:endEvent id="EndEvent_InvalidTeam" name="Proposal Terminated (Invalid Team)">
+      <bpmn:incoming>Flow_TeamInvalid</bpmn:incoming>
+      <bpmn:errorEventDefinition id="ErrorEventDef_InvalidTeam" errorRef="Error_InvalidTeam" />
+    </bpmn:endEvent>
+
+    <bpmn:userTask id="Task_CoordinatorScreening" name="Screen Proposal (Project Coordinator)" camunda:candidateGroups="coordinators">
+      <bpmn:incoming>Flow_ValidationPassed</bpmn:incoming>
+      <bpmn:outgoing>Flow_ScreeningToSimilarity</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:serviceTask id="Task_SimilarityCheck" name="Run Similarity &#38; Duplicate Check" camunda:type="external" camunda:topic="check-similarity">
+      <bpmn:incoming>Flow_ScreeningToSimilarity</bpmn:incoming>
+      <bpmn:outgoing>Flow_SimilarityToCommittee</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:userTask id="Task_CommitteeEvaluation" name="Evaluate Proposal (Review Committee)" camunda:candidateGroups="committee">
+      <bpmn:incoming>Flow_SimilarityToCommittee</bpmn:incoming>
+      <bpmn:incoming>Flow_RevisedToEvaluation</bpmn:incoming>
+      <bpmn:outgoing>Flow_EvaluationToGateway</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:exclusiveGateway id="Gateway_CommitteeDecision" name="Committee Decision?">
+      <bpmn:incoming>Flow_EvaluationToGateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_Approved</bpmn:outgoing>
+      <bpmn:outgoing>Flow_ReviseRequest</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Rejected</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:userTask id="Task_ReviseProposal" name="Revise Project Proposal" camunda:candidateGroups="students">
+      <bpmn:incoming>Flow_ReviseRequest</bpmn:incoming>
+      <bpmn:outgoing>Flow_RevisedToEvaluation</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:endEvent id="EndEvent_ProposalRejected" name="Proposal Rejected">
+      <bpmn:incoming>Flow_Rejected</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:businessRuleTask id="BusinessRule_GuideMatch" name="Check Guide Workload &#38; Domain Match" camunda:decisionRef="guide-matching-rule">
+      <bpmn:incoming>Flow_Approved</bpmn:incoming>
+      <bpmn:outgoing>Flow_RuleToGateway</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+
+    <bpmn:exclusiveGateway id="Gateway_GuideAvailable" name="Matching Guide Available?">
+      <bpmn:incoming>Flow_RuleToGateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_GuideFound</bpmn:outgoing>
+      <bpmn:outgoing>Flow_NoGuideFound</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:userTask id="Task_ManualAllocation" name="Manual Allocation / Co-Guide / Waitlist" camunda:candidateGroups="coordinators">
+      <bpmn:incoming>Flow_NoGuideFound</bpmn:incoming>
+      <bpmn:outgoing>Flow_ManualToAllocate</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:serviceTask id="Task_AllocateGuideSystem" name="Allocate Guide in System" camunda:type="external" camunda:topic="allocate-guide">
+      <bpmn:incoming>Flow_GuideFound</bpmn:incoming>
+      <bpmn:incoming>Flow_ManualToAllocate</bpmn:incoming>
+      <bpmn:outgoing>Flow_AllocateToSend</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:sendTask id="Task_SendAllocationRequest" name="Send Allocation Request to Guide" camunda:type="external" camunda:topic="send-guide-request">
+      <bpmn:incoming>Flow_AllocateToSend</bpmn:incoming>
+      <bpmn:outgoing>Flow_SendToAcceptance</bpmn:outgoing>
+    </bpmn:sendTask>
+
+    <bpmn:userTask id="Task_GuideAcceptance" name="Accept Allocation Request (Faculty Guide)" camunda:candidateGroups="guides">
+      <bpmn:incoming>Flow_SendToAcceptance</bpmn:incoming>
+      <bpmn:outgoing>Flow_AcceptanceToNotify</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:sendTask id="Task_NotifyStudent" name="Notify Student Team &#38; Record Allocation" camunda:type="external" camunda:topic="notify-student">
+      <bpmn:incoming>Flow_AcceptanceToNotify</bpmn:incoming>
+      <bpmn:outgoing>Flow_NotifyToEnd</bpmn:outgoing>
+    </bpmn:sendTask>
+
+    <bpmn:endEvent id="EndEvent_Success" name="Project &#38; Guide Formally Allocated">
+      <bpmn:incoming>Flow_NotifyToEnd</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- Sequence Flows -->
+    <bpmn:sequenceFlow id="Flow_StartToSubmit" sourceRef="StartEvent_SubmitProposal" targetRef="Task_SubmitProposal" />
+    <bpmn:sequenceFlow id="Flow_SubmitToValidate" sourceRef="Task_SubmitProposal" targetRef="Task_ValidateForm" />
+    <bpmn:sequenceFlow id="Flow_ValidateToGateway" sourceRef="Task_ValidateForm" targetRef="Gateway_ValidationCheck" />
+    <bpmn:sequenceFlow id="Flow_ValidationPassed" name="Valid Submission" sourceRef="Gateway_ValidationCheck" targetRef="Task_CoordinatorScreening" />
+    <bpmn:sequenceFlow id="Flow_FormInvalid" name="F1: Missing/Invalid Fields" sourceRef="Gateway_ValidationCheck" targetRef="Task_ResubmitProposal" />
+    <bpmn:sequenceFlow id="Flow_ResubmitToValidate" sourceRef="Task_ResubmitProposal" targetRef="Task_ValidateForm" />
+    <bpmn:sequenceFlow id="Flow_TeamInvalid" name="F2: Invalid Team Rules" sourceRef="Gateway_ValidationCheck" targetRef="EndEvent_InvalidTeam" />
+    <bpmn:sequenceFlow id="Flow_ScreeningToSimilarity" sourceRef="Task_CoordinatorScreening" targetRef="Task_SimilarityCheck" />
+    <bpmn:sequenceFlow id="Flow_SimilarityToCommittee" sourceRef="Task_SimilarityCheck" targetRef="Task_CommitteeEvaluation" />
+    <bpmn:sequenceFlow id="Flow_EvaluationToGateway" sourceRef="Task_CommitteeEvaluation" targetRef="Gateway_CommitteeDecision" />
+    <bpmn:sequenceFlow id="Flow_Approved" name="Approved" sourceRef="Gateway_CommitteeDecision" targetRef="BusinessRule_GuideMatch" />
+    <bpmn:sequenceFlow id="Flow_ReviseRequest" name="F5: Revise Request" sourceRef="Gateway_CommitteeDecision" targetRef="Task_ReviseProposal" />
+    <bpmn:sequenceFlow id="Flow_RevisedToEvaluation" sourceRef="Task_ReviseProposal" targetRef="Task_CommitteeEvaluation" />
+    <bpmn:sequenceFlow id="Flow_Rejected" name="F6: Rejection" sourceRef="Gateway_CommitteeDecision" targetRef="EndEvent_ProposalRejected" />
+    <bpmn:sequenceFlow id="Flow_RuleToGateway" sourceRef="BusinessRule_GuideMatch" targetRef="Gateway_GuideAvailable" />
+    <bpmn:sequenceFlow id="Flow_GuideFound" name="Guide Matched" sourceRef="Gateway_GuideAvailable" targetRef="Task_AllocateGuideSystem" />
+    <bpmn:sequenceFlow id="Flow_NoGuideFound" name="F8/F9: None / Declined" sourceRef="Gateway_GuideAvailable" targetRef="Task_ManualAllocation" />
+    <bpmn:sequenceFlow id="Flow_ManualToAllocate" sourceRef="Task_ManualAllocation" targetRef="Task_AllocateGuideSystem" />
+    <bpmn:sequenceFlow id="Flow_AllocateToSend" sourceRef="Task_AllocateGuideSystem" targetRef="Task_SendAllocationRequest" />
+    <bpmn:sequenceFlow id="Flow_SendToAcceptance" sourceRef="Task_SendAllocationRequest" targetRef="Task_GuideAcceptance" />
+    <bpmn:sequenceFlow id="Flow_AcceptanceToNotify" sourceRef="Task_GuideAcceptance" targetRef="Task_NotifyStudent" />
+    <bpmn:sequenceFlow id="Flow_NotifyToEnd" sourceRef="Task_NotifyStudent" targetRef="EndEvent_Success" />
+  </bpmn:process>
+
+  <bpmn:error id="Error_InvalidTeam" name="InvalidTeamError" errorCode="ERR_INVALID_TEAM" />
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_StudentProject">
+    <bpmndi:BPMNPlane id="BPMNPlane_StudentProject" bpmnElement="Collaboration_StudentProject">
+      <bpmndi:BPMNShape id="Participant_Department_di" bpmnElement="Participant_Department" isHorizontal="true">
+        <dc:Bounds x="160" y="80" width="1970" height="750" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Student_di" bpmnElement="Lane_Student" isHorizontal="true">
+        <dc:Bounds x="190" y="80" width="1940" height="150" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Coordinator_di" bpmnElement="Lane_Coordinator" isHorizontal="true">
+        <dc:Bounds x="190" y="230" width="1940" height="150" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Committee_di" bpmnElement="Lane_Committee" isHorizontal="true">
+        <dc:Bounds x="190" y="380" width="1940" height="150" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Guide_di" bpmnElement="Lane_Guide" isHorizontal="true">
+        <dc:Bounds x="190" y="530" width="1940" height="150" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_System_di" bpmnElement="Lane_System" isHorizontal="true">
+        <dc:Bounds x="190" y="680" width="1940" height="150" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- FlowNode Shapes -->
+      <bpmndi:BPMNShape id="StartEvent_SubmitProposal_di" bpmnElement="StartEvent_SubmitProposal">
+        <dc:Bounds x="230" y="137" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="210" y="180" width="77" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_SubmitProposal_di" bpmnElement="Task_SubmitProposal">
+        <dc:Bounds x="300" y="115" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_ResubmitProposal_di" bpmnElement="Task_ResubmitProposal">
+        <dc:Bounds x="430" y="115" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="EndEvent_InvalidTeam_di" bpmnElement="EndEvent_InvalidTeam">
+        <dc:Bounds x="570" y="137" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="545" y="180" width="87" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_ReviseProposal_di" bpmnElement="Task_ReviseProposal">
+        <dc:Bounds x="1050" y="115" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="EndEvent_ProposalRejected_di" bpmnElement="EndEvent_ProposalRejected">
+        <dc:Bounds x="1190" y="137" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1163" y="180" width="90" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_CoordinatorScreening_di" bpmnElement="Task_CoordinatorScreening">
+        <dc:Bounds x="670" y="265" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_ManualAllocation_di" bpmnElement="Task_ManualAllocation">
+        <dc:Bounds x="1450" y="265" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_CommitteeEvaluation_di" bpmnElement="Task_CommitteeEvaluation">
+        <dc:Bounds x="910" y="415" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Gateway_CommitteeDecision_di" bpmnElement="Gateway_CommitteeDecision" isMarkerVisible="true">
+        <dc:Bounds x="1050" y="430" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1045" y="400" width="60" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_GuideAcceptance_di" bpmnElement="Task_GuideAcceptance">
+        <dc:Bounds x="1730" y="565" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_ValidateForm_di" bpmnElement="Task_ValidateForm">
+        <dc:Bounds x="300" y="715" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Gateway_ValidationCheck_di" bpmnElement="Gateway_ValidationCheck" isMarkerVisible="true">
+        <dc:Bounds x="455" y="730" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="443" y="700" width="74" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_SimilarityCheck_di" bpmnElement="Task_SimilarityCheck">
+        <dc:Bounds x="790" y="715" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="BusinessRule_GuideMatch_di" bpmnElement="BusinessRule_GuideMatch">
+        <dc:Bounds x="1170" y="715" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Gateway_GuideAvailable_di" bpmnElement="Gateway_GuideAvailable" isMarkerVisible="true">
+        <dc:Bounds x="1310" y="730" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1295" y="700" width="80" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_AllocateGuideSystem_di" bpmnElement="Task_AllocateGuideSystem">
+        <dc:Bounds x="1450" y="715" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_SendAllocationRequest_di" bpmnElement="Task_SendAllocationRequest">
+        <dc:Bounds x="1590" y="715" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_NotifyStudent_di" bpmnElement="Task_NotifyStudent">
+        <dc:Bounds x="1870" y="715" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="EndEvent_Success_di" bpmnElement="EndEvent_Success">
+        <dc:Bounds x="2010" y="737" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1989" y="780" width="79" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- Edges -->
+      <bpmndi:BPMNEdge id="Flow_StartToSubmit_di" bpmnElement="Flow_StartToSubmit">
+        <di:waypoint x="266" y="155" />
+        <di:waypoint x="300" y="155" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_SubmitToValidate_di" bpmnElement="Flow_SubmitToValidate">
+        <di:waypoint x="350" y="195" />
+        <di:waypoint x="350" y="715" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_ValidateToGateway_di" bpmnElement="Flow_ValidateToGateway">
+        <di:waypoint x="400" y="755" />
+        <di:waypoint x="455" y="755" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_ValidationPassed_di" bpmnElement="Flow_ValidationPassed">
+        <di:waypoint x="480" y="730" />
+        <di:waypoint x="480" y="305" />
+        <di:waypoint x="670" y="305" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_FormInvalid_di" bpmnElement="Flow_FormInvalid">
+        <di:waypoint x="480" y="730" />
+        <di:waypoint x="480" y="195" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_ResubmitToValidate_di" bpmnElement="Flow_ResubmitToValidate">
+        <di:waypoint x="430" y="155" />
+        <di:waypoint x="350" y="155" />
+        <di:waypoint x="350" y="715" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_TeamInvalid_di" bpmnElement="Flow_TeamInvalid">
+        <di:waypoint x="505" y="755" />
+        <di:waypoint x="588" y="755" />
+        <di:waypoint x="588" y="173" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_ScreeningToSimilarity_di" bpmnElement="Flow_ScreeningToSimilarity">
+        <di:waypoint x="770" y="305" />
+        <di:waypoint x="840" y="305" />
+        <di:waypoint x="840" y="715" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_SimilarityToCommittee_di" bpmnElement="Flow_SimilarityToCommittee">
+        <di:waypoint x="890" y="755" />
+        <di:waypoint x="960" y="755" />
+        <di:waypoint x="960" y="495" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_EvaluationToGateway_di" bpmnElement="Flow_EvaluationToGateway">
+        <di:waypoint x="1010" y="455" />
+        <di:waypoint x="1050" y="455" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_ReviseRequest_di" bpmnElement="Flow_ReviseRequest">
+        <di:waypoint x="1075" y="430" />
+        <di:waypoint x="1075" y="195" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_RevisedToEvaluation_di" bpmnElement="Flow_RevisedToEvaluation">
+        <di:waypoint x="1050" y="155" />
+        <di:waypoint x="960" y="155" />
+        <di:waypoint x="960" y="415" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Rejected_di" bpmnElement="Flow_Rejected">
+        <di:waypoint x="1100" y="455" />
+        <di:waypoint x="1208" y="455" />
+        <di:waypoint x="1208" y="173" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Approved_di" bpmnElement="Flow_Approved">
+        <di:waypoint x="1075" y="480" />
+        <di:waypoint x="1075" y="755" />
+        <di:waypoint x="1170" y="755" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_RuleToGateway_di" bpmnElement="Flow_RuleToGateway">
+        <di:waypoint x="1270" y="755" />
+        <di:waypoint x="1310" y="755" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_GuideFound_di" bpmnElement="Flow_GuideFound">
+        <di:waypoint x="1360" y="755" />
+        <di:waypoint x="1450" y="755" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_NoGuideFound_di" bpmnElement="Flow_NoGuideFound">
+        <di:waypoint x="1335" y="730" />
+        <di:waypoint x="1335" y="305" />
+        <di:waypoint x="1450" y="305" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_ManualToAllocate_di" bpmnElement="Flow_ManualToAllocate">
+        <di:waypoint x="1500" y="345" />
+        <di:waypoint x="1500" y="715" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_AllocateToSend_di" bpmnElement="Flow_AllocateToSend">
+        <di:waypoint x="1550" y="755" />
+        <di:waypoint x="1590" y="755" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_SendToAcceptance_di" bpmnElement="Flow_SendToAcceptance">
+        <di:waypoint x="1640" y="715" />
+        <di:waypoint x="1640" y="605" />
+        <di:waypoint x="1730" y="605" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_AcceptanceToNotify_di" bpmnElement="Flow_AcceptanceToNotify">
+        <di:waypoint x="1780" y="645" />
+        <di:waypoint x="1780" y="755" />
+        <di:waypoint x="1870" y="755" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_NotifyToEnd_di" bpmnElement="Flow_NotifyToEnd">
+        <di:waypoint x="1970" y="755" />
+        <di:waypoint x="2010" y="755" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  id="Definitions_LoanOrigination"
+                  targetNamespace="http://bpmn.io/schema/bpmn"
+                  exporter="Camunda Modeler"
+                  exporterVersion="5.20.0">
+  <bpmn:collaboration id="Collaboration_Loan">
+    <bpmn:participant id="Participant_Bank" name="Loan Origination &#38; Approval System" processRef="Process_LoanOriginationApproval" />
+  </bpmn:collaboration>
+
+  <bpmn:process id="Process_LoanOriginationApproval" name="Loan Origination &#38; Approval System" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_Loan">
+      <bpmn:lane id="Lane_Applicant" name="Applicant">
+        <bpmn:flowNodeRef>StartEvent_LoanSubmitted</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_SubmitApplication</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_AcceptOffer</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_EsignAgreement</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_LoanOfficer" name="Loan Officer">
+        <bpmn:flowNodeRef>Task_IncomeCheck</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Underwriter" name="Underwriter / Credit Committee">
+        <bpmn:flowNodeRef>Task_UnderwriterReview</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Fraud" name="Fraud &#38; Compliance Team">
+        <bpmn:flowNodeRef>Task_KYCCheck</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_CreditBureau" name="Credit Bureau">
+        <bpmn:flowNodeRef>Task_CreditBureau</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_CoreBanking" name="Core Banking System">
+        <bpmn:flowNodeRef>Task_DocCheck</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_ParallelSplit</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_ParallelJoin</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_RiskScoring</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_GenerateOffer</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Disbursement" name="Operations / Disbursement">
+        <bpmn:flowNodeRef>Task_DisburseFunds</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_LoanDisbursed</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+
+    <bpmn:startEvent id="StartEvent_LoanSubmitted" name="Applicant Submits Loan Application">
+      <bpmn:outgoing>Flow_StartToSubmit</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:userTask id="Task_SubmitApplication" name="Submit Loan Application &#38; Documents" camunda:candidateGroups="applicants">
+      <bpmn:incoming>Flow_StartToSubmit</bpmn:incoming>
+      <bpmn:outgoing>Flow_SubmitToDocCheck</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:sequenceFlow id="Flow_StartToSubmit" sourceRef="StartEvent_LoanSubmitted" targetRef="Task_SubmitApplication" />
+
+    <bpmn:businessRuleTask id="Task_DocCheck" name="Check Document Completeness" camunda:decisionRef="check-doc-completeness">
+      <bpmn:incoming>Flow_SubmitToDocCheck</bpmn:incoming>
+      <bpmn:outgoing>Flow_DocCheckToSplit</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+
+    <bpmn:sequenceFlow id="Flow_SubmitToDocCheck" sourceRef="Task_SubmitApplication" targetRef="Task_DocCheck" />
+
+    <bpmn:parallelGateway id="Gateway_ParallelSplit" name="Parallel Verification Split">
+      <bpmn:incoming>Flow_DocCheckToSplit</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToKYC</bpmn:outgoing>
+      <bpmn:outgoing>Flow_ToBureau</bpmn:outgoing>
+      <bpmn:outgoing>Flow_ToIncome</bpmn:outgoing>
+    </bpmn:parallelGateway>
+
+    <bpmn:sequenceFlow id="Flow_DocCheckToSplit" sourceRef="Task_DocCheck" targetRef="Gateway_ParallelSplit" />
+
+    <bpmn:serviceTask id="Task_KYCCheck" name="KYC &#38; Identity Verification" camunda:type="external" camunda:topic="kyc-verification">
+      <bpmn:incoming>Flow_ToKYC</bpmn:incoming>
+      <bpmn:outgoing>Flow_KYCToJoin</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:sequenceFlow id="Flow_ToKYC" sourceRef="Gateway_ParallelSplit" targetRef="Task_KYCCheck" />
+
+    <bpmn:serviceTask id="Task_CreditBureau" name="Fetch Credit Bureau Score" camunda:type="external" camunda:topic="credit-bureau-fetch">
+      <bpmn:incoming>Flow_ToBureau</bpmn:incoming>
+      <bpmn:outgoing>Flow_BureauToJoin</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:sequenceFlow id="Flow_ToBureau" sourceRef="Gateway_ParallelSplit" targetRef="Task_CreditBureau" />
+
+    <bpmn:userTask id="Task_IncomeCheck" name="Verify Income &#38; Employment" camunda:candidateGroups="loan-officers">
+      <bpmn:incoming>Flow_ToIncome</bpmn:incoming>
+      <bpmn:outgoing>Flow_IncomeToJoin</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:sequenceFlow id="Flow_ToIncome" sourceRef="Gateway_ParallelSplit" targetRef="Task_IncomeCheck" />
+
+    <bpmn:parallelGateway id="Gateway_ParallelJoin" name="Parallel Verification Join">
+      <bpmn:incoming>Flow_KYCToJoin</bpmn:incoming>
+      <bpmn:incoming>Flow_BureauToJoin</bpmn:incoming>
+      <bpmn:incoming>Flow_IncomeToJoin</bpmn:incoming>
+      <bpmn:outgoing>Flow_JoinToScoring</bpmn:outgoing>
+    </bpmn:parallelGateway>
+
+    <bpmn:sequenceFlow id="Flow_KYCToJoin" sourceRef="Task_KYCCheck" targetRef="Gateway_ParallelJoin" />
+    <bpmn:sequenceFlow id="Flow_BureauToJoin" sourceRef="Task_CreditBureau" targetRef="Gateway_ParallelJoin" />
+    <bpmn:sequenceFlow id="Flow_IncomeToJoin" sourceRef="Task_IncomeCheck" targetRef="Gateway_ParallelJoin" />
+
+    <bpmn:businessRuleTask id="Task_RiskScoring" name="Eligibility &#38; Risk Scoring" camunda:decisionRef="loan-risk-scoring">
+      <bpmn:incoming>Flow_JoinToScoring</bpmn:incoming>
+      <bpmn:outgoing>Flow_ScoringToUnderwriter</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+
+    <bpmn:sequenceFlow id="Flow_JoinToScoring" sourceRef="Gateway_ParallelJoin" targetRef="Task_RiskScoring" />
+
+    <bpmn:userTask id="Task_UnderwriterReview" name="Underwriter Case Review &#38; Approval" camunda:candidateGroups="underwriters">
+      <bpmn:incoming>Flow_ScoringToUnderwriter</bpmn:incoming>
+      <bpmn:outgoing>Flow_UnderwriterToOffer</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:sequenceFlow id="Flow_ScoringToUnderwriter" sourceRef="Task_RiskScoring" targetRef="Task_UnderwriterReview" />
+
+    <bpmn:scriptTask id="Task_GenerateOffer" name="Generate Loan Offer Document" scriptFormat="javascript">
+      <bpmn:incoming>Flow_UnderwriterToOffer</bpmn:incoming>
+      <bpmn:outgoing>Flow_OfferToAcceptance</bpmn:outgoing>
+      <bpmn:script>execution.setVariable("offerGenerated", true);</bpmn:script>
+    </bpmn:scriptTask>
+
+    <bpmn:sequenceFlow id="Flow_UnderwriterToOffer" sourceRef="Task_UnderwriterReview" targetRef="Task_GenerateOffer" />
+
+    <bpmn:receiveTask id="Task_AcceptOffer" name="Applicant Accepts Offer" messageRef="Message_OfferAccepted">
+      <bpmn:incoming>Flow_OfferToAcceptance</bpmn:incoming>
+      <bpmn:outgoing>Flow_AcceptanceToEsign</bpmn:outgoing>
+    </bpmn:receiveTask>
+
+    <bpmn:sequenceFlow id="Flow_OfferToAcceptance" sourceRef="Task_GenerateOffer" targetRef="Task_AcceptOffer" />
+
+    <bpmn:userTask id="Task_EsignAgreement" name="E-Sign Loan Agreement" camunda:candidateGroups="applicants">
+      <bpmn:incoming>Flow_AcceptanceToEsign</bpmn:incoming>
+      <bpmn:outgoing>Flow_EsignToDisburse</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:sequenceFlow id="Flow_AcceptanceToEsign" sourceRef="Task_AcceptOffer" targetRef="Task_EsignAgreement" />
+
+    <bpmn:serviceTask id="Task_DisburseFunds" name="Disburse Funds &#38; Create Loan Account" camunda:type="external" camunda:topic="disburse-loan-funds">
+      <bpmn:incoming>Flow_EsignToDisburse</bpmn:incoming>
+      <bpmn:outgoing>Flow_DisburseToEnd</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:sequenceFlow id="Flow_EsignToDisburse" sourceRef="Task_EsignAgreement" targetRef="Task_DisburseFunds" />
+
+    <bpmn:endEvent id="EndEvent_LoanDisbursed" name="Loan Disbursed &#38; Active">
+      <bpmn:incoming>Flow_DisburseToEnd</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="Flow_DisburseToEnd" sourceRef="Task_DisburseFunds" targetRef="EndEvent_LoanDisbursed" />
+  </bpmn:process>
+
+  <bpmn:message id="Message_OfferAccepted" name="Message_OfferAccepted" />
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Loan">
+    <bpmndi:BPMNPlane id="BPMNPlane_Loan" bpmnElement="Collaboration_Loan">
+      <bpmndi:BPMNShape id="Participant_Bank_di" bpmnElement="Participant_Bank" isHorizontal="true">
+        <dc:Bounds x="160" y="80" width="1800" height="980" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Applicant_di" bpmnElement="Lane_Applicant" isHorizontal="true">
+        <dc:Bounds x="190" y="80" width="1770" height="140" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_LoanOfficer_di" bpmnElement="Lane_LoanOfficer" isHorizontal="true">
+        <dc:Bounds x="190" y="220" width="1770" height="140" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Underwriter_di" bpmnElement="Lane_Underwriter" isHorizontal="true">
+        <dc:Bounds x="190" y="360" width="1770" height="140" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Fraud_di" bpmnElement="Lane_Fraud" isHorizontal="true">
+        <dc:Bounds x="190" y="500" width="1770" height="140" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_CreditBureau_di" bpmnElement="Lane_CreditBureau" isHorizontal="true">
+        <dc:Bounds x="190" y="640" width="1770" height="140" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_CoreBanking_di" bpmnElement="Lane_CoreBanking" isHorizontal="true">
+        <dc:Bounds x="190" y="780" width="1770" height="140" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Disbursement_di" bpmnElement="Lane_Disbursement" isHorizontal="true">
+        <dc:Bounds x="190" y="920" width="1770" height="140" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="StartEvent_LoanSubmitted_di" bpmnElement="StartEvent_LoanSubmitted">
+        <dc:Bounds x="230" y="130" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="205" y="173" width="87" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_SubmitApplication_di" bpmnElement="Task_SubmitApplication">
+        <dc:Bounds x="300" y="110" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_AcceptOffer_di" bpmnElement="Task_AcceptOffer">
+        <dc:Bounds x="1350" y="110" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_EsignAgreement_di" bpmnElement="Task_EsignAgreement">
+        <dc:Bounds x="1500" y="110" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_IncomeCheck_di" bpmnElement="Task_IncomeCheck">
+        <dc:Bounds x="650" y="250" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_UnderwriterReview_di" bpmnElement="Task_UnderwriterReview">
+        <dc:Bounds x="1050" y="390" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_KYCCheck_di" bpmnElement="Task_KYCCheck">
+        <dc:Bounds x="650" y="530" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_CreditBureau_di" bpmnElement="Task_CreditBureau">
+        <dc:Bounds x="650" y="670" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_DocCheck_di" bpmnElement="Task_DocCheck">
+        <dc:Bounds x="300" y="810" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Gateway_ParallelSplit_di" bpmnElement="Gateway_ParallelSplit" isMarkerVisible="true">
+        <dc:Bounds x="550" y="825" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="536" y="795" width="79" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Gateway_ParallelJoin_di" bpmnElement="Gateway_ParallelJoin" isMarkerVisible="true">
+        <dc:Bounds x="800" y="825" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="786" y="795" width="79" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_RiskScoring_di" bpmnElement="Task_RiskScoring">
+        <dc:Bounds x="900" y="810" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_GenerateOffer_di" bpmnElement="Task_GenerateOffer">
+        <dc:Bounds x="1200" y="810" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_DisburseFunds_di" bpmnElement="Task_DisburseFunds">
+        <dc:Bounds x="1650" y="950" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="EndEvent_LoanDisbursed_di" bpmnElement="EndEvent_LoanDisbursed">
+        <dc:Bounds x="1802" y="972" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1781" y="1015" width="78" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- Edges -->
+      <bpmndi:BPMNEdge id="Flow_StartToSubmit_di" bpmnElement="Flow_StartToSubmit">
+        <di:waypoint x="266" y="148" />
+        <di:waypoint x="300" y="148" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_SubmitToDocCheck_di" bpmnElement="Flow_SubmitToDocCheck">
+        <di:waypoint x="350" y="190" />
+        <di:waypoint x="350" y="810" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_DocCheckToSplit_di" bpmnElement="Flow_DocCheckToSplit">
+        <di:waypoint x="400" y="850" />
+        <di:waypoint x="550" y="850" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_ToKYC_di" bpmnElement="Flow_ToKYC">
+        <di:waypoint x="575" y="825" />
+        <di:waypoint x="575" y="570" />
+        <di:waypoint x="650" y="570" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_ToBureau_di" bpmnElement="Flow_ToBureau">
+        <di:waypoint x="575" y="825" />
+        <di:waypoint x="575" y="710" />
+        <di:waypoint x="650" y="710" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_ToIncome_di" bpmnElement="Flow_ToIncome">
+        <di:waypoint x="575" y="825" />
+        <di:waypoint x="575" y="290" />
+        <di:waypoint x="650" y="290" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_KYCToJoin_di" bpmnElement="Flow_KYCToJoin">
+        <di:waypoint x="750" y="570" />
+        <di:waypoint x="825" y="570" />
+        <di:waypoint x="825" y="825" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_BureauToJoin_di" bpmnElement="Flow_BureauToJoin">
+        <di:waypoint x="750" y="710" />
+        <di:waypoint x="825" y="710" />
+        <di:waypoint x="825" y="825" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_IncomeToJoin_di" bpmnElement="Flow_IncomeToJoin">
+        <di:waypoint x="750" y="290" />
+        <di:waypoint x="825" y="290" />
+        <di:waypoint x="825" y="825" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_JoinToScoring_di" bpmnElement="Flow_JoinToScoring">
+        <di:waypoint x="850" y="850" />
+        <di:waypoint x="900" y="850" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_ScoringToUnderwriter_di" bpmnElement="Flow_ScoringToUnderwriter">
+        <di:waypoint x="950" y="810" />
+        <di:waypoint x="950" y="430" />
+        <di:waypoint x="1050" y="430" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_UnderwriterToOffer_di" bpmnElement="Flow_UnderwriterToOffer">
+        <di:waypoint x="1150" y="430" />
+        <di:waypoint x="1250" y="430" />
+        <di:waypoint x="1250" y="810" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_OfferToAcceptance_di" bpmnElement="Flow_OfferToAcceptance">
+        <di:waypoint x="1300" y="850" />
+        <di:waypoint x="1400" y="850" />
+        <di:waypoint x="1400" y="190" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_AcceptanceToEsign_di" bpmnElement="Flow_AcceptanceToEsign">
+        <di:waypoint x="1450" y="150" />
+        <di:waypoint x="1500" y="150" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_EsignToDisburse_di" bpmnElement="Flow_EsignToDisburse">
+        <di:waypoint x="1550" y="190" />
+        <di:waypoint x="1550" y="990" />
+        <di:waypoint x="1650" y="990" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_DisburseToEnd_di" bpmnElement="Flow_DisburseToEnd">
+        <di:waypoint x="1750" y="990" />
+        <di:waypoint x="1802" y="990" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
