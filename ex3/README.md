@@ -1,6 +1,23 @@
+# Exercise 3 (ex3): BPMN 2.0 Process Models & Failure Path Registers
 
+This repository folder contains executable standard BPMN 2.0 XML process diagrams and comprehensive documentation for **Assignment 1** and **Assignment 3** modeled for **Camunda Modeler** and **Camunda Platform 7 / Camunda 8**.
 
-### 1. Assignment 1: Student Project Approval & Allocation System
+---
+
+## 📂 Directory Structure
+
+```
+camunda/ex3/
+├── README.md                                   # Documentation & Element Specifications (This file)
+├── assignment1_student_project_approval.bpmn   # Assignment 1 BPMN 2.0 Diagram (Student Project Approval)
+└── assignment3_loan_origination_approval.bpmn  # Assignment 3 BPMN 2.0 Diagram (Loan Origination System)
+```
+
+---
+
+## 📑 Summary of Assignments
+
+### 1. Assignment 1: Student Project Approval & Allocation System (`assignment1_student_project_approval.bpmn`)
 - **Business Purpose**: Automated verification of student project proposals, screening by project coordinator, committee evaluation, faculty guide workload matching, and allocation dispatch.
 - **Participant Pools & Lanes**:
   - **Student / Team**: Submits proposals, resubmissions, and revised topics.
@@ -38,7 +55,7 @@
 
 ---
 
-### 2. Assignment 3: Loan Origination & Approval System
+### 2. Assignment 3: Loan Origination & Approval System (`assignment3_loan_origination_approval.bpmn`)
 - **Business Purpose**: Comprehensive processing of personal and secured loan applications through identity verification, credit bureau scoring, risk underwriting, offer generation, e-signature, and funds disbursement.
 - **Participant Pools & Lanes**:
   - **Applicant**: Submits applications, accepts offers, and e-signs agreements.
@@ -79,4 +96,10 @@
 
 ---
 
+## 🛠️ How to View in Camunda Modeler
 
+1. Launch **Camunda Modeler** (`Camunda Modeler.exe`).
+2. Select **File -> Open File...** and choose either:
+   - `assignment1_student_project_approval.bpmn`
+   - `assignment3_loan_origination_approval.bpmn`
+3. Diagrams contain complete BPMNDI layout XML tags with 5+ participant pools and swimlanes for clear visual presentation.
