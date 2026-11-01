@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" 
+             xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" 
+             xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" 
+             xmlns:biodi="http://bpmn.io/schema/dmn/biodi/1.0" 
+             id="Definitions_OrderPriority" 
+             name="Order Priority Determination Definitions" 
+             namespace="http://camunda.org/schema/1.0/dmn">
+  <decision id="decision_order_priority" name="Order Priority &amp; Routing">
+    <decisionTable id="DecisionTable_OrderPriority" hitPolicy="FIRST">
+      
+      <!-- Input 1: Order Total Value -->
+      <input id="Input_orderTotal" label="Order Total ($)" biodi:width="180">
+        <inputExpression id="InputExpression_orderTotal" typeRef="number">
+          <text>orderTotal</text>
+        </inputExpression>
+      </input>
+
+      <!-- Input 2: Customer Category -->
+      <input id="Input_customerCategory" label="Customer Category" biodi:width="190">
+        <inputExpression id="InputExpression_customerCategory" typeRef="string">
+          <text>customerCategory</text>
+        </inputExpression>
+      </input>
+
+      <!-- Input 3: Delivery Preference -->
+      <input id="Input_deliveryPreference" label="Delivery Preference" biodi:width="190">
+        <inputExpression id="InputExpression_deliveryPreference" typeRef="string">
+          <text>deliveryPreference</text>
+        </inputExpression>
+      </input>
+
+      <!-- Output 1: Delivery Priority -->
+      <output id="Output_deliveryPriority" label="Delivery Priority" name="deliveryPriority" typeRef="string" biodi:width="160" />
+      
+      <!-- Output 2: Shipping Lane -->
+      <output id="Output_shippingLane" label="Shipping Lane" name="shippingLane" typeRef="string" biodi:width="160" />
+
+      <!-- Output 3: Requires Manual Verification -->
+      <output id="Output_requiresManualVerification" label="Requires Manual Verification" name="requiresManualVerification" typeRef="boolean" biodi:width="210" />
+
+      <!-- Rule 1: High-Value Exception (e.g. Total >= $1000) -> High Priority with Manual Review -->
+      <rule id="Rule_1_HighValueException">
+        <description>High value orders exceeding risk threshold trigger manual verification</description>
+        <inputEntry id="UnaryTests_1_1">
+          <text>&gt;= 1000</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1_1">
+          <text>"EXPRESS"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1_2">
+          <text>"SECURED_COURIER"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1_3">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+
+      <!-- Rule 2: VIP / Platinum Customer with Express Delivery -> Express Lane -->
+      <rule id="Rule_2_VipExpress">
+        <description>VIP customers requesting express delivery are routed to highest priority lane</description>
+        <inputEntry id="UnaryTests_2_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_2_2">
+          <text>"VIP", "PLATINUM"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_2_3">
+          <text>"EXPRESS", "SAME_DAY"</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_2_1">
+          <text>"CRITICAL"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_2_2">
+          <text>"AIR_EXPRESS"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_2_3">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+
+      <!-- Rule 3: Regular Customer with Express Delivery -->
+      <rule id="Rule_3_RegularExpress">
+        <description>Standard customer paying for express service</description>
+        <inputEntry id="UnaryTests_3_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_3_2">
+          <text>"REGULAR"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_3_3">
+          <text>"EXPRESS"</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_3_1">
+          <text>"HIGH"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_3_2">
+          <text>"PRIORITY_GROUND"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_3_3">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+
+      <!-- Rule 4: Moderate Order Value with Standard Delivery -->
+      <rule id="Rule_4_StandardOrder">
+        <description>Standard order delivery</description>
+        <inputEntry id="UnaryTests_4_1">
+          <text>[100..999]</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_4_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_4_3">
+          <text>"STANDARD"</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_4_1">
+          <text>"STANDARD"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_4_2">
+          <text>"STANDARD_GROUND"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_4_3">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+
+      <!-- Rule 5: Low Value / Economy Catch-all -->
+      <rule id="Rule_5_Economy">
+        <description>Low value or economy shipping preference</description>
+        <inputEntry id="UnaryTests_5_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_5_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_5_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_5_1">
+          <text>"LOW"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_5_2">
+          <text>"ECONOMY_POST"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_5_3">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+
+    </decisionTable>
+  </decision>
+
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_OrderPriority">
+      <dmndi:DMNShape id="DMNShape_decision_order_priority" dmnElementRef="decision_order_priority">
+        <dc:Bounds height="80" width="220" x="160" y="100" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

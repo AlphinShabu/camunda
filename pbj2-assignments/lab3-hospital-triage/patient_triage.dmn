@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" 
+             xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" 
+             xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" 
+             xmlns:biodi="http://bpmn.io/schema/dmn/biodi/1.0" 
+             id="Definitions_PatientTriage" 
+             name="Patient Triage Decision Definitions" 
+             namespace="http://camunda.org/schema/1.0/dmn">
+  <decision id="decision_patient_triage" name="Patient Triage Classification">
+    <decisionTable id="DecisionTable_PatientTriage" hitPolicy="FIRST">
+      
+      <!-- Input 1: Urgency Indicator Flag -->
+      <input id="Input_urgencyIndicator" label="Urgency Indicator" biodi:width="180">
+        <inputExpression id="InputExpression_urgencyIndicator" typeRef="string">
+          <text>urgencyIndicator</text>
+        </inputExpression>
+      </input>
+
+      <!-- Input 2: Symptoms Summary Keyword -->
+      <input id="Input_symptomsSummary" label="Symptoms Summary" biodi:width="200">
+        <inputExpression id="InputExpression_symptomsSummary" typeRef="string">
+          <text>symptomsSummary</text>
+        </inputExpression>
+      </input>
+
+      <!-- Input 3: Patient Age -->
+      <input id="Input_patientAge" label="Patient Age" biodi:width="150">
+        <inputExpression id="InputExpression_patientAge" typeRef="number">
+          <text>patientAge</text>
+        </inputExpression>
+      </input>
+
+      <!-- Output 1: Triage Category -->
+      <output id="Output_triageCategory" label="Triage Category" name="triageCategory" typeRef="string" biodi:width="180" />
+      
+      <!-- Output 2: Max Wait Time (Hours) -->
+      <output id="Output_maxWaitTimeHours" label="Max Wait Time (Hrs)" name="maxWaitTimeHours" typeRef="number" biodi:width="170" />
+
+      <!-- Output 3: Recommended Department -->
+      <output id="Output_recommendedDepartment" label="Recommended Dept" name="recommendedDepartment" typeRef="string" biodi:width="190" />
+
+      <!-- Rule 1: Immediate Life Threat / High Urgency -> Urgent Assessment -->
+      <rule id="Rule_1_UrgentAssessment">
+        <description>Life-threatening signs (chest pain, acute breathlessness) trigger immediate human clinical assessment</description>
+        <inputEntry id="UnaryTests_1_1">
+          <text>"CRITICAL", "EMERGENCY"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1_1">
+          <text>"Urgent Assessment"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1_2">
+          <text>0.25</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1_3">
+          <text>"EMERGENCY_CARE"</text>
+        </outputEntry>
+      </rule>
+
+      <!-- Rule 2: High Urgency Symptoms for Vulnerable Age Groups (Infant or Elderly) -->
+      <rule id="Rule_2_VulnerablePriority">
+        <description>Vulnerable patients with acute symptoms get Priority Review</description>
+        <inputEntry id="UnaryTests_2_1">
+          <text>"MODERATE", "HIGH"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_2_2">
+          <text>"FEVER_HIGH", "DIZZINESS", "FRACTURE_SUSPECTED"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_2_3">
+          <text>&lt; 5, &gt; 65</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_2_1">
+          <text>"Priority Review"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_2_2">
+          <text>2.0</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_2_3">
+          <text>"URGENT_OUTPATIENT"</text>
+        </outputEntry>
+      </rule>
+
+      <!-- Rule 3: Priority Review for Moderate Symptoms -->
+      <rule id="Rule_3_ModeratePriority">
+        <description>Moderate pain or lingering infection needing physician review</description>
+        <inputEntry id="UnaryTests_3_1">
+          <text>"MODERATE"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_3_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_3_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_3_1">
+          <text>"Priority Review"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_3_2">
+          <text>6.0</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_3_3">
+          <text>"SPECIALIST_CLINIC"</text>
+        </outputEntry>
+      </rule>
+
+      <!-- Rule 4: Routine Consultation / Checkup -->
+      <rule id="Rule_4_RoutineConsultation">
+        <description>Standard checkup or mild cold/flu symptom consultation</description>
+        <inputEntry id="UnaryTests_4_1">
+          <text>"LOW", "ROUTINE"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_4_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_4_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_4_1">
+          <text>"Routine"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_4_2">
+          <text>24.0</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_4_3">
+          <text>"GENERAL_MEDICINE"</text>
+        </outputEntry>
+      </rule>
+
+      <!-- Rule 5: Fallback Rule -->
+      <rule id="Rule_5_DefaultRoutine">
+        <description>Default triage fallback routes to routine general medicine</description>
+        <inputEntry id="UnaryTests_5_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_5_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_5_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_5_1">
+          <text>"Routine"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_5_2">
+          <text>48.0</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_5_3">
+          <text>"GENERAL_MEDICINE"</text>
+        </outputEntry>
+      </rule>
+
+    </decisionTable>
+  </decision>
+
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_PatientTriage">
+      <dmndi:DMNShape id="DMNShape_decision_patient_triage" dmnElementRef="decision_patient_triage">
+        <dc:Bounds height="80" width="220" x="160" y="100" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

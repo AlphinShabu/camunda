@@ -1,0 +1,3 @@
+com\camunda\assignment\worker\AssignmentWorkers.class
+com\camunda\assignment\AssignmentApplication.class
+com\camunda\assignment\mockapi\MockServicesController.class
