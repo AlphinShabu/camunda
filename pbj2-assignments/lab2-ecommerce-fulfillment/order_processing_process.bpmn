@@ -82,14 +82,14 @@
       <bpmn:incoming>Flow_VerificationRejected</bpmn:incoming>
     </bpmn:endEvent>
 
-    <!-- 6. REST Connector: Invoke Payment Gateway API -->
-    <bpmn:serviceTask id="Task_ProcessPayment" name="Invoke Payment Gateway (REST Connector)">
+    <!-- 6. REST Outbound Connector: Invoke Payment Gateway API -->
+    <bpmn:serviceTask id="Task_ProcessPayment" name="Invoke Payment Gateway (REST Connector)" zeebe:modelerTemplate="io.camunda.connectors.HttpJson.v2" zeebe:modelerTemplateVersion="18">
       <bpmn:extensionElements>
         <zeebe:taskDefinition type="io.camunda:http-json:1" retries="3" />
         <zeebe:ioMapping>
           <zeebe:input source="noAuth" target="authentication.type" />
           <zeebe:input source="POST" target="method" />
-          <zeebe:input source="http://localhost:8080/api/payment" target="url" />
+          <zeebe:input source="http://localhost:8090/api/payment" target="url" />
           <zeebe:input source="={orderId: orderId, customerRef: customerRef, orderTotal: orderTotal, paymentToken: paymentToken}" target="body" />
           <zeebe:input source="20" target="connectionTimeoutInSeconds" />
           <zeebe:input source="20" target="readTimeoutInSeconds" />

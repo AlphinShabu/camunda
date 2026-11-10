@@ -41,14 +41,14 @@
       <bpmn:incoming>Flow_ValidationFailed</bpmn:incoming>
     </bpmn:endEvent>
 
-    <!-- 2. REST Connector Task: Call Credit Assessment API -->
-    <bpmn:serviceTask id="Task_CreditAssessment" name="Call Credit Assessment API">
+    <!-- 2. REST Outbound Connector Task: Call Credit Assessment API -->
+    <bpmn:serviceTask id="Task_CreditAssessment" name="Call Credit Assessment API" zeebe:modelerTemplate="io.camunda.connectors.HttpJson.v2" zeebe:modelerTemplateVersion="18">
       <bpmn:extensionElements>
         <zeebe:taskDefinition type="io.camunda:http-json:1" retries="3" />
         <zeebe:ioMapping>
           <zeebe:input source="noAuth" target="authentication.type" />
           <zeebe:input source="POST" target="method" />
-          <zeebe:input source="http://localhost:8080/api/credit-assessment" target="url" />
+          <zeebe:input source="http://localhost:8090/api/credit-assessment" target="url" />
           <zeebe:input source="={applicantId: applicantId, monthlyIncome: monthlyIncome, requestedAmount: requestedAmount}" target="body" />
           <zeebe:input source="20" target="connectionTimeoutInSeconds" />
           <zeebe:input source="20" target="readTimeoutInSeconds" />
